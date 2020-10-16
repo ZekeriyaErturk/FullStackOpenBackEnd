@@ -1,8 +1,18 @@
-const { response } = require("express");
+const { response, json } = require("express");
 const express = require("express");
+const morgan = require("morgan");
 
 const app = express();
 
+morgan.token("custom", (req, res) => {
+  return JSON.stringify(req.body);
+});
+
+app.use(
+  morgan(
+    ":method :url :status :res[content-length] - :response-time ms :custom"
+  )
+);
 app.use(express.json());
 
 let persons = [
@@ -58,11 +68,13 @@ app.get("/api/persons/:id", (req, res) => {
 app.post("/api/persons", (req, res) => {
   const body = req.body;
 
+  // Check for dublicates
   const name = persons.find(
     (p) => p.name.toLowerCase() === body.name.toLowerCase()
   );
   const number = persons.find((p) => p.number === body.number);
 
+  // Error Handling
   if (!body.name || !body.number) {
     return res.status(400).json({
       error: "name or number missing",
@@ -77,6 +89,7 @@ app.post("/api/persons", (req, res) => {
     });
   }
 
+  // Create person data
   const person = {
     id: Math.floor(Math.random() * 95) + 5,
     name: body.name,
