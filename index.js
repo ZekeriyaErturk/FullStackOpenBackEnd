@@ -1,6 +1,9 @@
+const { response } = require("express");
 const express = require("express");
 
 const app = express();
+
+app.use(express.json());
 
 let persons = [
   {
@@ -25,8 +28,72 @@ let persons = [
   },
 ];
 
+// General info of phonebook
+app.get("/info", (req, res) => {
+  const info = `
+    <div>
+      <p>Phonebook has info for ${persons.length} people</p>
+      <p>${new Date().toString()}</p>
+    </div>
+  `;
+  res.send(info);
+});
+
+// Get persons
 app.get("/api/persons", (req, res) => {
   res.json(persons);
+});
+
+// Get person
+app.get("/api/persons/:id", (req, res) => {
+  const person = persons.find((p) => p.id === +req.params.id);
+  if (person) {
+    res.json(person);
+  } else {
+    res.status(404).end();
+  }
+});
+
+// Create person
+app.post("/api/persons", (req, res) => {
+  const body = req.body;
+
+  const name = persons.find(
+    (p) => p.name.toLowerCase() === body.name.toLowerCase()
+  );
+  const number = persons.find((p) => p.number === body.number);
+
+  if (!body.name || !body.number) {
+    return res.status(400).json({
+      error: "name or number missing",
+    });
+  } else if (name) {
+    return res.status(400).json({
+      error: "name must be unique",
+    });
+  } else if (number) {
+    return res.status(400).json({
+      error: "number must be unique",
+    });
+  }
+
+  const person = {
+    id: Math.floor(Math.random() * 95) + 5,
+    name: body.name,
+    number: body.number,
+  };
+
+  persons = persons.concat(person);
+
+  res.json(person);
+});
+
+// Delete Person
+app.delete("/api/persons/:id", (req, res) => {
+  const id = +req.params.id;
+  persons = persons.filter((p) => p.id !== id);
+
+  res.status(204).end();
 });
 
 const PORT = 3001;
