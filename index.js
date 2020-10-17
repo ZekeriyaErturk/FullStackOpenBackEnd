@@ -24,6 +24,8 @@ const errorHandler = (err, req, res, next) => {
   console.log(err.message);
   if (err.name === "CastError") {
     return res.status(400).send({ error: "malformatted id" });
+  } else if (err.name === "ValidationError") {
+    return res.status(400).send({ error: err.message });
   }
 
   next(err);
@@ -110,15 +112,19 @@ app.post("/api/persons", (req, res, next) => {
     .catch((err) => next(err));
 });
 
+// Update Person
 app.put("/api/persons/:id", (req, res, next) => {
   const body = req.body;
+  console.log(body);
 
   const person = {
-    name: body.name,
     number: body.number,
   };
 
-  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+  Person.findByIdAndUpdate(req.params.id, person, {
+    new: true,
+    runValidators: true,
+  })
     .then((updatedPerson) => res.json(updatedPerson))
     .catch((err) => next(err));
 });
