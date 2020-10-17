@@ -1,10 +1,12 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const morgan = require("morgan");
 const Person = require("./models/person");
 
 const app = express();
 app.use(express.static("build"));
+app.use(cors());
 
 morgan.token("custom", (req, res) => {
   return JSON.stringify(req.body);
@@ -59,10 +61,16 @@ app.get("/api/persons", (req, res) => {
 });
 
 // Get person
-app.get("/api/persons/:id", (req, res) => {
-  Person.findById(req.params.id).then((person) => {
-    res.json(person);
-  });
+app.get("/api/persons/:id", (req, res, next) => {
+  Person.findById(req.params.id)
+    .then((person) => {
+      if (person) {
+        res.json(person);
+      } else {
+        res.status(404).end();
+      }
+    })
+    .catch((err) => next(err));
 });
 
 // Create person
@@ -86,10 +94,11 @@ app.post("/api/persons", (req, res) => {
 
 // Delete Person
 app.delete("/api/persons/:id", (req, res) => {
-  const id = +req.params.id;
-  persons = persons.filter((p) => p.id !== id);
-
-  res.status(204).end();
+  Person.findByIdAndRemove(req.params.id)
+    .then((result) => {
+      res.status(204).end();
+    })
+    .catch((error) => console.log(error));
 });
 
 const PORT = process.env.PORT || 3001;
