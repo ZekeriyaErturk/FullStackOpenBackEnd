@@ -7,6 +7,7 @@ const Person = require("./models/person");
 const app = express();
 app.use(express.static("build"));
 app.use(cors());
+app.use(express.json());
 
 morgan.token("custom", (req, res) => {
   return JSON.stringify(req.body);
@@ -17,7 +18,16 @@ app.use(
     ":method :url :status :res[content-length] - :response-time ms :custom"
   )
 );
-app.use(express.json());
+
+// Error Handling
+const errorHandler = (err, req, res, next) => {
+  console.log(err.message);
+  if (err.name === "CastError") {
+    return res.status(400).send({ error: "malformatted id" });
+  }
+
+  next(err);
+};
 
 let persons = [
   {
@@ -74,7 +84,7 @@ app.get("/api/persons/:id", (req, res, next) => {
 });
 
 // Create person
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const body = req.body;
 
   if (!body.number || !body.name) {
@@ -87,19 +97,37 @@ app.post("/api/persons", (req, res) => {
     number: body.number,
   });
 
-  person.save().then((savedPerson) => {
-    res.json(savedPerson);
-  });
+  person
+    .save()
+    .then((savedPerson) => {
+      res.json(savedPerson);
+    })
+    .catch((err) => next(err));
+});
+
+app.put("/api/persons/:id", (req, res, next) => {
+  const body = req.body;
+
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+
+  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+    .then((updatedPerson) => res.json(updatedPerson))
+    .catch((err) => next(err));
 });
 
 // Delete Person
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
   Person.findByIdAndRemove(req.params.id)
     .then((result) => {
       res.status(204).end();
     })
-    .catch((error) => console.log(error));
+    .catch((error) => next(error));
 });
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
