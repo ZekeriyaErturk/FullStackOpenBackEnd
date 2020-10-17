@@ -1,6 +1,7 @@
-const { response, json } = require("express");
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
+const Person = require("./models/person");
 
 const app = express();
 app.use(express.static("build"));
@@ -52,7 +53,9 @@ app.get("/info", (req, res) => {
 
 // Get persons
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  Person.find({}).then((notes) => {
+    res.json(notes);
+  });
 });
 
 // Get person
