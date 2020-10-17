@@ -9,7 +9,7 @@ app.use(express.static("build"));
 app.use(cors());
 app.use(express.json());
 
-morgan.token("custom", (req, res) => {
+morgan.token("custom", (req) => {
   return JSON.stringify(req.body);
 });
 
@@ -31,31 +31,8 @@ const errorHandler = (err, req, res, next) => {
   next(err);
 };
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendick",
-    number: "39-23-6423122",
-  },
-];
-
 // General info of phonebook
-app.get("/info", (req, res) => {
+app.get("/info", (req, res, next) => {
   Person.find({})
     .then((persons) => {
       const info = `
@@ -132,7 +109,7 @@ app.put("/api/persons/:id", (req, res, next) => {
 // Delete Person
 app.delete("/api/persons/:id", (req, res, next) => {
   Person.findByIdAndRemove(req.params.id)
-    .then((result) => {
+    .then(() => {
       res.status(204).end();
     })
     .catch((error) => next(error));
