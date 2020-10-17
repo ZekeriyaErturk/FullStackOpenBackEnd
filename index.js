@@ -54,19 +54,24 @@ let persons = [
 
 // General info of phonebook
 app.get("/info", (req, res) => {
-  const info = `
+  Person.find({})
+    .then((persons) => {
+      const info = `
     <div>
       <p>Phonebook has info for ${persons.length} people</p>
       <p>${new Date().toString()}</p>
     </div>
   `;
-  res.send(info);
+
+      res.send(info);
+    })
+    .catch((err) => next(err));
 });
 
 // Get persons
 app.get("/api/persons", (req, res) => {
-  Person.find({}).then((notes) => {
-    res.json(notes);
+  Person.find({}).then((persons) => {
+    res.json(persons);
   });
 });
 
