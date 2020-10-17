@@ -60,49 +60,28 @@ app.get("/api/persons", (req, res) => {
 
 // Get person
 app.get("/api/persons/:id", (req, res) => {
-  const person = persons.find((p) => p.id === +req.params.id);
-  if (person) {
+  Person.findById(req.params.id).then((person) => {
     res.json(person);
-  } else {
-    res.status(404).end();
-  }
+  });
 });
 
 // Create person
 app.post("/api/persons", (req, res) => {
   const body = req.body;
 
-  // Check for dublicates
-  const name = persons.find(
-    (p) => p.name.toLowerCase() === body.name.toLowerCase()
-  );
-  const number = persons.find((p) => p.number === body.number);
-
-  // Error Handling
-  if (!body.name || !body.number) {
-    return res.status(400).json({
-      error: "name or number missing",
-    });
-  } else if (name) {
-    return res.status(400).json({
-      error: "name must be unique",
-    });
-  } else if (number) {
-    return res.status(400).json({
-      error: "number must be unique",
-    });
+  if (!body.number || !body.name) {
+    return res.status(400).json({ error: "name or number missing" });
   }
 
   // Create person data
-  const person = {
-    id: Math.floor(Math.random() * 95) + 5,
+  const person = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(person);
-
-  res.json(person);
+  person.save().then((savedPerson) => {
+    res.json(savedPerson);
+  });
 });
 
 // Delete Person
